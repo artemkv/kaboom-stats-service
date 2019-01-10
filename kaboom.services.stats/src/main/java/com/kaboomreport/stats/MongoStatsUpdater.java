@@ -7,11 +7,17 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.UpdateOptions;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
+
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Updates.combine;
+import static com.mongodb.client.model.Updates.setOnInsert;
 
 @Component
 public class MongoStatsUpdater implements StatsUpdater {
@@ -51,6 +57,7 @@ public class MongoStatsUpdater implements StatsUpdater {
                 break;
             case CRASH:
                 updateCrashEventStats(event, application);
+                saveCrashDetails(event, application);
                 break;
             case UNKNOWN:
                 // Ignore unknown events (at least for now)
@@ -162,6 +169,32 @@ public class MongoStatsUpdater implements StatsUpdater {
             new UpdateOptions().upsert(true));
     }
 
+    private void saveCrashDetails(AppEvent event, Document application) {
+        try {
+            String appId = application.get("_id").toString();
+            String hash = getDigest(event.getMessage() + event.getDetails());
+
+            Document crash = new Document("appId", appId)
+                .append("hash", hash)
+                .append("message", event.getMessage())
+                .append("details", event.getDetails())
+                .append("dt", event.getReceivedOn());
+
+            MongoCollection<Document> appCrashes = database.getCollection("appcrashes");
+            appCrashes.updateOne(
+                and(eq("appId", appId), eq("hash", hash)),
+                combine(
+                    new Document("$setOnInsert", crash),
+                    new Document("$inc", new Document("count", 1))
+                ),
+                new UpdateOptions().upsert(true));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Could not calculate event hash. MD5 is not supported", e);
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalStateException("Could not calculate event hash. UTF-8 is not supported", e);
+        }
+    }
+
     private String getYear(LocalDateTime date) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy");
         return date.format(formatter);
@@ -190,5 +223,16 @@ public class MongoStatsUpdater implements StatsUpdater {
     private String getSecond(LocalDateTime date) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         return date.format(formatter);
+    }
+
+    private String getDigest(String data)
+        throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        byte[] digest = md.digest(data.getBytes("UTF-8"));
+        StringBuilder sb = new StringBuilder();
+        for (byte b : digest) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 }

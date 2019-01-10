@@ -10,6 +10,8 @@ public class AppEvent {
     private String eventTypeString;
     private String applicationCode;
     private LocalDateTime receivedOn;
+    private String message;
+    private String details;
 
     @JsonProperty("t")
     private String getEventTypeString() {
@@ -44,5 +46,21 @@ public class AppEvent {
     }
     public void setReceivedOn(LocalDateTime receivedOn) {
         this.receivedOn = receivedOn;
+    }
+
+    @JsonProperty("m")
+    public String getMessage() {
+        return message;
+    }
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    @JsonProperty("d")
+    public String getDetails() {
+        return details;
+    }
+    public void setDetails(String details) {
+        this.details = details;
     }
 }
