@@ -1,6 +1,7 @@
 package com.kaboomreport.stats;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -9,7 +10,6 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Arrays;
@@ -114,6 +114,7 @@ public class KafkaEventConsumer implements IncomingEventConsumer {
         System.out.println(String.format("Consumer Record:(%s, %s)", record.key(), record.value()));
 
         ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
         try {
             AppEvent event = mapper.readValue(record.value(), AppEvent.class);
             statsUpdater.updateEventStats(event);

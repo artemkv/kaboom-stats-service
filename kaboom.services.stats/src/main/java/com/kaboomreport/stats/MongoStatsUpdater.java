@@ -4,9 +4,14 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.UpdateOptions;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.and;
 
 @Component
 public class MongoStatsUpdater implements StatsUpdater {
@@ -54,10 +59,136 @@ public class MongoStatsUpdater implements StatsUpdater {
     }
 
     private void updateStartEventStats(AppEvent event, Document application) {
-        System.out.println("HANDLING START EVENT"); // TODO:
+        String appId = application.get("_id").toString();
+
+        String year = getYear(event.getReceivedOn());
+        MongoCollection<Document> appStatsStartByYear =
+            database.getCollection("appstats.start.byyear");
+        appStatsStartByYear.updateOne(
+            and(eq("appId", appId), eq("dt", year)),
+            new Document("$inc", new Document("count", 1)),
+            new UpdateOptions().upsert(true));
+
+        String month = getMonth(event.getReceivedOn());
+        MongoCollection<Document> appStatsStartByMonth =
+            database.getCollection("appstats.start.bymonth");
+        appStatsStartByMonth.updateOne(
+            and(eq("appId", appId), eq("dt", month)),
+            new Document("$inc", new Document("count", 1)),
+            new UpdateOptions().upsert(true));
+
+        String day = getDay(event.getReceivedOn());
+        MongoCollection<Document> appStatsStartByDay =
+            database.getCollection("appstats.start.byday");
+        appStatsStartByDay.updateOne(
+            and(eq("appId", appId), eq("dt", day)),
+            new Document("$inc", new Document("count", 1)),
+            new UpdateOptions().upsert(true));
+
+        String hour = getHour(event.getReceivedOn());
+        MongoCollection<Document> appStatsStartByHour =
+            database.getCollection("appstats.start.byhour");
+        appStatsStartByHour.updateOne(
+            and(eq("appId", appId), eq("dt", hour)),
+            new Document("$inc", new Document("count", 1)),
+            new UpdateOptions().upsert(true));
+
+        String minute = getMinute(event.getReceivedOn());
+        MongoCollection<Document> appStatsStartByMinute =
+            database.getCollection("appstats.start.byminute");
+        appStatsStartByMinute.updateOne(
+            and(eq("appId", appId), eq("dt", minute)),
+            new Document("$inc", new Document("count", 1)),
+            new UpdateOptions().upsert(true));
+
+        String second = getSecond(event.getReceivedOn());
+        MongoCollection<Document> appStatsStartBySecond =
+            database.getCollection("appstats.start.bysecond");
+        appStatsStartBySecond.updateOne(
+            and(eq("appId", appId), eq("dt", second)),
+            new Document("$inc", new Document("count", 1)),
+            new UpdateOptions().upsert(true));
     }
 
     private void updateCrashEventStats(AppEvent event, Document application) {
-        System.out.println("HANDLING CRASH EVENT"); // TODO:
+        String appId = application.get("_id").toString();
+
+        String year = getYear(event.getReceivedOn());
+        MongoCollection<Document> appStatsCrashByYear =
+            database.getCollection("appstats.crash.byyear");
+        appStatsCrashByYear.updateOne(
+            and(eq("appId", appId), eq("dt", year)),
+            new Document("$inc", new Document("count", 1)),
+            new UpdateOptions().upsert(true));
+
+        String month = getMonth(event.getReceivedOn());
+        MongoCollection<Document> appStatsCrashByMonth =
+            database.getCollection("appstats.crash.bymonth");
+        appStatsCrashByMonth.updateOne(
+            and(eq("appId", appId), eq("dt", month)),
+            new Document("$inc", new Document("count", 1)),
+            new UpdateOptions().upsert(true));
+
+        String day = getDay(event.getReceivedOn());
+        MongoCollection<Document> appStatsCrashByDay =
+            database.getCollection("appstats.crash.byday");
+        appStatsCrashByDay.updateOne(
+            and(eq("appId", appId), eq("dt", day)),
+            new Document("$inc", new Document("count", 1)),
+            new UpdateOptions().upsert(true));
+
+        String hour = getHour(event.getReceivedOn());
+        MongoCollection<Document> appStatsCrashByHour =
+            database.getCollection("appstats.crash.byhour");
+        appStatsCrashByHour.updateOne(
+            and(eq("appId", appId), eq("dt", hour)),
+            new Document("$inc", new Document("count", 1)),
+            new UpdateOptions().upsert(true));
+
+        String minute = getMinute(event.getReceivedOn());
+        MongoCollection<Document> appStatsCrashByMinute =
+            database.getCollection("appstats.crash.byminute");
+        appStatsCrashByMinute.updateOne(
+            and(eq("appId", appId), eq("dt", minute)),
+            new Document("$inc", new Document("count", 1)),
+            new UpdateOptions().upsert(true));
+
+        String second = getSecond(event.getReceivedOn());
+        MongoCollection<Document> appStatsCrashBySecond =
+            database.getCollection("appstats.crash.bysecond");
+        appStatsCrashBySecond.updateOne(
+            and(eq("appId", appId), eq("dt", second)),
+            new Document("$inc", new Document("count", 1)),
+            new UpdateOptions().upsert(true));
+    }
+
+    private String getYear(LocalDateTime date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy");
+        return date.format(formatter);
+    }
+
+    private String getMonth(LocalDateTime date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMM");
+        return date.format(formatter);
+    }
+
+    private String getDay(LocalDateTime date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        return date.format(formatter);
+    }
+
+    private String getHour(LocalDateTime date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHH");
+        return date.format(formatter);
+    }
+
+    private String getMinute(LocalDateTime date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+        return date.format(formatter);
+    }
+
+    private String getSecond(LocalDateTime date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        return date.format(formatter);
     }
 }
