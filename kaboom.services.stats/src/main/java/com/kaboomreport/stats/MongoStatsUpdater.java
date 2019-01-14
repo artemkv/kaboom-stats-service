@@ -5,19 +5,17 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
-
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Updates.combine;
-import static com.mongodb.client.model.Updates.setOnInsert;
 
 @Component
 public class MongoStatsUpdater implements StatsUpdater {
@@ -66,55 +64,55 @@ public class MongoStatsUpdater implements StatsUpdater {
     }
 
     private void updateStartEventStats(AppEvent event, Document application) {
-        String appId = application.get("_id").toString();
+        if (event.getUserId() == null || event.getUserId().length() == 0) {
+            // Ignore events without user id (at least for now)
+            return;
+        }
 
-        String year = getYear(event.getReceivedOn());
-        MongoCollection<Document> appStatsStartByYear =
-            database.getCollection("appstats.start.byyear");
-        appStatsStartByYear.updateOne(
-            and(eq("appId", appId), eq("dt", year)),
-            new Document("$inc", new Document("count", 1)),
-            new UpdateOptions().upsert(true));
+        String appId = application.get("_id").toString();
+        String userId = event.getUserId();
 
         String month = getMonth(event.getReceivedOn());
-        MongoCollection<Document> appStatsStartByMonth =
-            database.getCollection("appstats.start.bymonth");
-        appStatsStartByMonth.updateOne(
-            and(eq("appId", appId), eq("dt", month)),
+        MongoCollection<Document> userLaunchesByMonth = database.getCollection("user.launches.bymonth");
+        UpdateResult result1 = userLaunchesByMonth.updateOne(
+            and(eq("appId", appId), eq("userId", userId), eq("dt", month)),
             new Document("$inc", new Document("count", 1)),
             new UpdateOptions().upsert(true));
+        if (result1.getMatchedCount() == 0) {
+            MongoCollection<Document> uniqueUsersByMonth = database.getCollection("uniqueusers.bymonth");
+            uniqueUsersByMonth.updateOne(
+                and(eq("appId", appId), eq("dt", month)),
+                new Document("$inc", new Document("count", 1)),
+                new UpdateOptions().upsert(true));
+        }
 
         String day = getDay(event.getReceivedOn());
-        MongoCollection<Document> appStatsStartByDay =
-            database.getCollection("appstats.start.byday");
-        appStatsStartByDay.updateOne(
-            and(eq("appId", appId), eq("dt", day)),
+        MongoCollection<Document> userLaunchesByDay = database.getCollection("user.launches.byday");
+        UpdateResult result2 = userLaunchesByDay.updateOne(
+            and(eq("appId", appId), eq("userId", userId), eq("dt", day)),
             new Document("$inc", new Document("count", 1)),
             new UpdateOptions().upsert(true));
+        if (result2.getMatchedCount() == 0) {
+            MongoCollection<Document> uniqueUsersByDay = database.getCollection("uniqueusers.byday");
+            uniqueUsersByDay.updateOne(
+                and(eq("appId", appId), eq("dt", day)),
+                new Document("$inc", new Document("count", 1)),
+                new UpdateOptions().upsert(true));
+        }
 
         String hour = getHour(event.getReceivedOn());
-        MongoCollection<Document> appStatsStartByHour =
-            database.getCollection("appstats.start.byhour");
-        appStatsStartByHour.updateOne(
-            and(eq("appId", appId), eq("dt", hour)),
+        MongoCollection<Document> userLaunchesByHour = database.getCollection("user.launches.byhour");
+        UpdateResult result3 = userLaunchesByHour.updateOne(
+            and(eq("appId", appId), eq("userId", userId), eq("dt", hour)),
             new Document("$inc", new Document("count", 1)),
             new UpdateOptions().upsert(true));
-
-        String minute = getMinute(event.getReceivedOn());
-        MongoCollection<Document> appStatsStartByMinute =
-            database.getCollection("appstats.start.byminute");
-        appStatsStartByMinute.updateOne(
-            and(eq("appId", appId), eq("dt", minute)),
-            new Document("$inc", new Document("count", 1)),
-            new UpdateOptions().upsert(true));
-
-        String second = getSecond(event.getReceivedOn());
-        MongoCollection<Document> appStatsStartBySecond =
-            database.getCollection("appstats.start.bysecond");
-        appStatsStartBySecond.updateOne(
-            and(eq("appId", appId), eq("dt", second)),
-            new Document("$inc", new Document("count", 1)),
-            new UpdateOptions().upsert(true));
+        if (result3.getMatchedCount() == 0) {
+            MongoCollection<Document> uniqueUsersByHour = database.getCollection("uniqueusers.byhour");
+            uniqueUsersByHour.updateOne(
+                and(eq("appId", appId), eq("dt", hour)),
+                new Document("$inc", new Document("count", 1)),
+                new UpdateOptions().upsert(true));
+        }
     }
 
     private void updateCrashEventStats(AppEvent event, Document application) {

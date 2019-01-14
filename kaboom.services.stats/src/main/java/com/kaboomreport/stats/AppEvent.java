@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 public class AppEvent {
     private String eventTypeString;
     private String applicationCode;
+    private String userId;
     private LocalDateTime receivedOn;
     private String message;
     private String details;
@@ -40,11 +41,19 @@ public class AppEvent {
         this.applicationCode = applicationCode;
     }
 
+    @JsonProperty("u")
+    public String getUserId() {
+        return userId;
+    }
+    private void setUserId(String userId) {
+        this.userId = userId;
+    }
+
     @JsonProperty("dts")
     public LocalDateTime getReceivedOn() {
         return receivedOn;
     }
-    public void setReceivedOn(LocalDateTime receivedOn) {
+    private void setReceivedOn(LocalDateTime receivedOn) {
         this.receivedOn = receivedOn;
     }
 
@@ -52,7 +61,7 @@ public class AppEvent {
     public String getMessage() {
         return message;
     }
-    public void setMessage(String message) {
+    private void setMessage(String message) {
         this.message = message;
     }
 
@@ -60,7 +69,7 @@ public class AppEvent {
     public String getDetails() {
         return details;
     }
-    public void setDetails(String details) {
+    private void setDetails(String details) {
         this.details = details;
     }
 }
