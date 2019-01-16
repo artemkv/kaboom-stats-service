@@ -43,3 +43,8 @@ jobs:
       # run tests!
       - run: mvn integration-test
 
+      - deploy:
+          name: Publish docker image to docker hub
+          command: |
+            docker login -u $DOCKER_HUB_USER_ID -p $DOCKER_HUB_PWD
+            mvn dockerfile:push
