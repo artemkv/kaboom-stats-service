@@ -9,6 +9,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.time.Duration;
@@ -28,6 +30,8 @@ public class KafkaEventConsumer implements IncomingEventConsumer {
     private final StatsUpdater statsUpdater;
 
     private Consumer<String, String> consumer;
+
+    private static final Logger logger = LoggerFactory.getLogger(KafkaEventConsumer.class);
 
     public KafkaEventConsumer(KafkaConsumerProperties consumerProperties,
                               StatsUpdater statsUpdater) {
@@ -59,10 +63,14 @@ public class KafkaEventConsumer implements IncomingEventConsumer {
             consumer.subscribe(Arrays.asList(TOPICS));
 
             int emptyPollsCounter = 0;
-            while (emptyPollsCounter < consumerProperties.getMaxEmptyPolls() &&
+            while (/*emptyPollsCounter < consumerProperties.getMaxEmptyPolls() &&*/ // TODO: Disable this logic for now
                 !shutdownRequested.get()) {
+                logger.debug("Polling for messages");
+
                 ConsumerRecords<String, String> records = consumer.poll(
                     Duration.ofMillis(consumerProperties.getPollTimeout()));
+
+                logger.debug(String.format("Found %d messages", records.count()));
 
                 if (records.count() == 0) {
                     emptyPollsCounter++;
@@ -76,9 +84,9 @@ public class KafkaEventConsumer implements IncomingEventConsumer {
                 }
             }
             if (shutdownRequested.get()) {
-                System.out.println("Shutdown requested, exiting");
+                logger.info("Shutdown requested, exiting");
             } else {
-                System.out.println("Could not retrieve any messages, exiting");
+                logger.info("Could not retrieve any messages, exiting");
             }
         } catch (WakeupException e) {
             if (!shutdownRequested.get()) {
@@ -110,8 +118,7 @@ public class KafkaEventConsumer implements IncomingEventConsumer {
     }
 
     private void process(ConsumerRecord<String, String> record) {
-        // TODO: process records
-        System.out.println(String.format("Consumer Record:(%s, %s)", record.key(), record.value()));
+        logger.debug(String.format("Consumer Record:(%s, %s)", record.key(), record.value()));
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
