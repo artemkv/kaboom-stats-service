@@ -9,6 +9,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @SpringBootTest
 public class ApplicationTests {
     @Test
-    public void contextLoads() {
+    public void testTODO() {
+        // TODO: write tests
     }
 }

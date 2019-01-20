@@ -32,7 +32,7 @@ public class MongoStatsUpdater implements StatsUpdater {
         this.properties = properties;
 
         mongoClient = MongoClients.create(properties.getConnectionString());
-        database = mongoClient.getDatabase("kaboom");
+        database = mongoClient.getDatabase(properties.getDbName());
     }
 
     @Override
