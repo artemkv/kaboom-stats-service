@@ -14,6 +14,6 @@ EXPOSE 8500
 ENV SERVER_ADDRESS=0.0.0.0
 ENV SERVER_PORT=8500
 ENV LOGGING_PATH=/usr/local/bin/kaboom-stats/logs
-ENV JAVA_OPTIONS -Xmx32m -Xms32m
+ENV JAVA_OPTIONS -Xmx64m -Xms64m
 
 CMD java $JAVA_OPTIONS -jar /usr/local/bin/kaboom-stats/kaboom-stats-service.jar
