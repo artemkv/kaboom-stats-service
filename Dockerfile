@@ -16,4 +16,4 @@ ENV SERVER_PORT=8500
 ENV LOGGING_PATH=/usr/local/bin/kaboom-stats/logs
 ENV JAVA_OPTIONS -Xmx256m -Xms256m
 
-ENTRYPOINT ["java", "$JAVA_OPTIONS", "-jar", "/usr/local/bin/kaboom-stats/kaboom-stats-service.jar"]
+CMD java $JAVA_OPTIONS -jar /usr/local/bin/kaboom-stats/kaboom-stats-service.jar
